@@ -1,62 +1,58 @@
-Loan Default Risk Analysis
+# Credit Risk & Collections Diagnostic
 
-A SQL-based analysis of a loan portfolio to identify which borrower and loan characteristics are most associated with default risk.
+An end-to-end analysis identifying which borrower segments are driving default risk in a 255,347-loan portfolio, and what underwriting/collections changes would reduce expected loss.
 
-Objective
+## Business Question
 
-Analyze a dataset of loan records to identify which factors — loan purpose, income level, loan amount, and interest rate — are most associated with default risk, and surface actionable risk segments for a lending business.
+Is default risk evenly spread across the loan portfolio, or concentrated in specific borrower segments — and if concentrated, where should underwriting or collections focus first?
 
-Dataset
+## Approach
 
+1. **SQL analysis** (SQLite) — segmented the portfolio by employment type, loan purpose, credit score band, and DTI (debt-to-income) band using `CASE WHEN` bucketing, `GROUP BY`, CTEs, and window functions (`RANK() OVER`) to surface the highest-risk combinations.
+2. **Power BI dashboard** — rebuilt the segmentation as an interactive dashboard using Power Query (M) for band logic and DAX measures for default rate calculations, including a locked-segment measure (`CALCULATE`) for the headline stat.
+3. **Client-style deck** — packaged the finding into a 5-slide recommendation deck (Situation / Findings / Recommendation / Quantified Impact / Next Steps).
 
-Source: Loan default prediction dataset (Kaggle)
-Size: ~2,999 valid records after cleaning, 18 columns
-Data quality note: The raw file contained 248,014 fully blank rows (likely an Excel export artifact). These were identified and removed before analysis, retaining 2,999 valid loan records.
+## Key Finding
 
+**Unemployed borrowers with poor credit (<580) default at 14.56%** — 1.75x the rate of Full-time + Excellent-credit borrowers (8.32%), and well above the 11% portfolio average.
 
-Method
+This is not a small or noisy segment: **32,399 loans, 12.7% of the entire portfolio.**
 
-SQL techniques used: conditional aggregation (CASE WHEN + SUM), GROUP BY, Common Table Expressions (CTEs), window functions (RANK() OVER), and string concatenation for formatted output.
+The finding was confirmed from a second, independent angle — Unemployed + High DTI borrowers default at 14.21% — confirming the risk driver is the borrower profile itself (unemployment + financial stretch), not a single metric.
 
-Key Findings
+## Dashboard
 
-1. Overall default rate: 12.37% (371 of 2,999 loans)
+![Dashboard screenshot](dashboard-screenshot.png)
+*(Replace this with your actual Power BI dashboard screenshot — bar chart, matrix, headline card, and text banner)*
 
-2. Default rate by loan purpose:
+Interactive `.pbix` file: `credit_risk_project.pbix`
 
-PurposeDefault RateOther14.02%Business13.01%Education12.46%Auto12.15%Home10.35%
+## Recommendation
 
-Business loans carry the highest interpretable risk among named categories — likely reflecting higher uncertainty in business cash flow versus asset-backed loans like Home.
+1. **At origination:** tighten underwriting criteria or add income/employment verification for new applications in this segment
+2. **On existing loans:** prioritize this segment for proactive collections outreach before accounts reach default
 
-3. Loan amount × interest rate combined:
-The riskiest combination is High loan amount (150k+) + High interest rate, at 18.18% default rate — nearly 3x higher than the safest combination (Low loan amount + Low interest rate, 3.59%). This shows loan amount and interest rate compound each other's risk rather than acting independently.
+## Quantified Impact
 
-4. Default rate by income bracket:
+If tightened underwriting/collections brought this segment's default rate down to the portfolio average (11%), that's an estimated **~1,150 fewer defaults** — a **~3.9% reduction in total portfolio defaults**, from this one segment alone.
 
-Income BracketDefault RateLow (<70k)14.44%Medium (70k-1L)11.49%High (1L+)10.58%
+## Tools Used
 
-5. Riskiest combined segments (purpose + income, ranked):
+SQL (SQLite) — CTEs, window functions, aggregate segmentation
+Power BI — Power Query (M), DAX (CALCULATE, DIVIDE), interactive slicers, cross-filtering
 
+## About This Project
 
-Other + Low Income — 17.72%
-Education + Low Income — 15.85%
-Business + Medium Income — 15.22%
-Auto + Low Income — 14.34%
-Home + Medium Income — 12.95%
+This is a self-directed portfolio project, built independently to demonstrate an end-to-end data analysis workflow — from raw data to a business-ready recommendation.
 
+---
 
-Combining two factors reveals meaningfully sharper risk segments than any single factor alone — the top combined segment (17.72%) is notably higher than the riskiest single factor from loan purpose alone (14.02%).
+## The 90-Second Version (STAR)
 
-So What — Business Implications
+**Situation** — I noticed most public credit-risk analysis examples use clean, toy data that doesn't reflect how real lending portfolios behave, so I built one from a realistic 255K-row loan dataset to practice the full workflow end to end.
 
+**Task** — My goal was to identify which borrower segments were driving the portfolio's default rate and turn that into a recommendation a credit risk team could actually act on.
 
-Loans in the "High amount + High interest" bucket should trigger additional underwriting review — this segment defaults at nearly 5x the rate of the safest bucket.
-Low-income borrowers combined with "Other" or "Education" loan purposes represent the highest-risk segment and could warrant tighter approval criteria or additional income verification.
-Loan purpose alone is a weak risk signal (10.35%–14.02% range) — income level and loan structure (amount/interest) are stronger standalone predictors, but combining factors sharpens risk identification significantly.
+**Action** — I used SQL (CTEs and window functions) to segment defaults by employment type, credit score, and debt-to-income ratio, cross-validated the finding from two independent angles, then rebuilt the analysis as an interactive Power BI dashboard with DAX measures, and packaged it into a 5-slide client-style recommendation deck.
 
-
-Files
-
-
-loan_analysis.sql — all 5 queries used in this analysis
-Screenshots of query outputs included in this repo
+**Result** — The analysis surfaced a segment — Unemployed borrowers with poor credit — defaulting at 1.75x the rate of the safest segment, representing 12.7% of the portfolio. If addressed, this alone could reduce total portfolio defaults by an estimated ~3.9%.
